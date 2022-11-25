@@ -37,15 +37,16 @@
 
 //uint8_t temp = 0;
 float mag[3], acc[3];
-char formated_text[30], value_x[10], value_y[10], value_z[10];
-float press, alt, temp, humidity;
+char formated_text[40], value_x[10], value_y[10], value_z[10];
+float temp,press, alti;
+int hum;
 
 void SystemClock_Config(void);
 void USART2_PutBuffer1();
 
 int main(void)
 {
-  char str[4][40];
+  //char str[4][40];
  // char str1[]="Buffer capacity: ";
   LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
   LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
@@ -63,24 +64,34 @@ int main(void)
 
   lps22hb_init();
   hts221_init();
-  for(int i = 0; i<4; i++){
-	  changeMode(str, i);
-  }
+//  for(int i = 0; i<4; i++){
+//	  changeMode(str, i);
+//  }
   while (1)
   {
 	  //os			   x      y        z
-	  for(uint8_t mode= 0; mode<4; mode++){
-		  changeMode(str, mode);
-		  USART2_PutBuffer(str[mode], strlen(str[mode]));
-		  LL_mDelay(100);
-	  }
+//	  for(uint8_t mode= 0; mode<4; mode++){
+//		  changeMode(str, mode);
+//		  USART2_PutBuffer(str[mode], strlen(str[mode]));
+//		  LL_mDelay(100);
+//	  }
+	  //temp = lps22hb_get_temp();
+	  temp = hts221_get_temp();
+	  hum = (int)(hts221_get_humidity());
+	  press = lps22hb_get_press();
+	  alti = lps22hb_get_altitude();
+
+
+	  memset(formated_text, '\0', sizeof(formated_text));
+	  sprintf(formated_text, "teplota[C]:%03.1f,humidity[%%]:%02d,press[hPa]:%05.1f,altitude[m]:%05.1f\r\n", temp,hum,press,alti);
+	  USART2_PutBuffer(formated_text, strlen(formated_text));
 	  LL_mDelay(1500);
+
 //	  lsm6ds0_get_acc(acc, (acc+1), (acc+2));
 //	  memset(formated_text, '\0', sizeof(formated_text));
 //	  sprintf(formated_text, "%0.4f,%0.4f,%0.4f\r\n", acc[0], acc[1], acc[2]);
 //	  USART2_PutBuffer(formated_text, strlen(formated_text));
 	  //LL_USART_TransmitData8(USART2,'5');
-	  //LL_mDelay(10);
   }
 }
 /**
@@ -133,19 +144,19 @@ void changeMode(char str[4][40], uint8_t mode)
 				tempt = -99.9;
 			}
 			if(tempt >= 0){
-				sprintf(str[0], "teplota[°C]:%04.1f\r\n",tempt);
+				sprintf(str[0], "teplota[C]:%04.1f\r\n",tempt);
 			}else{
-				sprintf(str[0], "teplota[°C]:%05.1f\r\n",tempt);
+				sprintf(str[0], "teplota[C]:%05.1f\r\n",tempt);
 			}
 			break;
 		case 1: // humidity
-			sprintf(str[1], "rel.vlhkosť[%]:%02d\r\n",(int)(hts221_get_humidity()));
+			sprintf(str[1], "humidity[%%]:%02d\r\n",(int)(hts221_get_humidity()));
 			break;
 		case 2: //pressure
-			sprintf(str[2], "tlak vzduchu [hPa]:%06.1f\r\n",lps22hb_get_press());
+			sprintf(str[2], "press[hPa]:%06.1f\r\n",lps22hb_get_press());
 			break;
 		case 3: // altitude
-			sprintf(str[3], "relatívna výška od zeme [m]:%06.1f\r\n",lps22hb_get_altitude());
+			sprintf(str[3], "altitude[m]:%06.1f\r\n",lps22hb_get_altitude());
 			break;
 	}
 }

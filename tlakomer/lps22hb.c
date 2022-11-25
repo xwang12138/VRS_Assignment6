@@ -30,22 +30,40 @@ void lps22hb_readArray(uint8_t * data, uint8_t reg, uint8_t length)
 
 float lps22hb_get_temp()
 {
-	uint8_t temp[2];
-	lps22hb_readArray(temp, LPS22HB_ADDRESS_TEMP_OUT_L, 2);
-	return ((int16_t)((temp[1] << 8) | temp[0]))/1000;
+	uint8_t buffer1;
+	uint8_t buffer2;
+	uint16_t temp;
+	//lps22hb_readArray(buffer, LPS22HB_ADDRESS_TEMP_OUT_L, 2);
+	buffer1=lps22hb_read_byte(LPS22HB_ADDRESS_TEMP_OUT_L);
+	buffer2=lps22hb_read_byte(LPS22HB_ADDRESS_TEMP_OUT_H);
+	temp=(((uint16_t)buffer2) << 8)|(uint16_t)buffer1;
+	return (float)((int16_t)(temp/100));
+	//return ((int16_t)temp/48+42.5);
 }
 
 float lps22hb_get_press(){
 
-	uint8_t tmp[3];
-	lps22hb_readArray(tmp, LPS22HB_ADDRESS_PRESS_OUT_XL, 3);
+	uint8_t buffer1;
+	uint8_t buffer2;
+	uint8_t buffer3;
+	uint32_t press=0;
+	uint8_t i;
 
-	return (tmp[2]*65536 + tmp[1]*256 + tmp[0])*100/4096.0;
+	buffer1=lps22hb_read_byte(LPS22HB_ADDRESS_PRESS_OUT_XL);
+	buffer2=lps22hb_read_byte(LPS22HB_ADDRESS_PRESS_OUT_L);
+	buffer3=lps22hb_read_byte(LPS22HB_ADDRESS_PRESS_OUT_H);
+//	for(i = 0; i < 3; i++)
+//	   press |= (((uint32_t)buffer1[i]) << (8 * i));
+	/* convert the 2's complement 24 bit to 2's complement 32 bit */
+	  press=((uint32_t)buffer3)<<16|((uint32_t)buffer2)<<8|buffer1;
+	  if(press & 0x00800000)
+	    press |= 0xFF000000;
+	return (float)(((int32_t)press)/4096.0f);//*100to hpa
 }
 
 float lps22hb_get_altitude(){
-	//return ((R*Tb*log(lps22hb_get_press()/Pb))/(-g*M));  //https://www.mide.com/air-pressure-at-altitude-calculator
-	return (((pow(Pb/100/(lps22hb_get_press()), 1/5.257)-1)*(lps22hb_get_temp()+273.15))/0.0065)/100;	//https://keisan.casio.com/exec/system/1224585971
+	return ((R*Tb*log(lps22hb_get_press()*100/Pb))/(-g*M));  //https://www.mide.com/air-pressure-at-altitude-calculator
+	//return (((pow(Pb/100/(lps22hb_get_press()), 1/5.257)-1)*(lps22hb_get_temp()+273.15))/0.0065);	//https://keisan.casio.com/exec/system/1224585971
 
 }
 
@@ -80,9 +98,15 @@ uint8_t lps22hb_init(void)
 
 	uint8_t ctrl1 = lps22hb_read_byte(LPS22HB_ADDRESS_CTRL1);
 	ctrl1 &= ~0xFC;
-	ctrl1 |= 0x50;
+	ctrl1 |= 0x30;
+	uint8_t ctrl2=0x00;
+	uint8_t ctrl3=0x00;
+	//uint8_t ctrl4=0x00;
 	lps22hb_write_byte(LPS22HB_ADDRESS_CTRL1, ctrl1);
 
+	lps22hb_write_byte(LPS22HB_ADDRESS_CTRL2, ctrl2);
+	lps22hb_write_byte(LPS22HB_ADDRESS_CTRL3, ctrl3);
+//	lps22hb_write_byte(LPS22HB_ADDRESS_CTRL4, ctrl4);
 	return status;
 }
 

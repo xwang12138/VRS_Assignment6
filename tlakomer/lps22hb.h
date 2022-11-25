@@ -3,15 +3,19 @@
 #include "i2c.h"
 #include <math.h>
 
+//	A2
 
 
-#define 	LPS22HB_DEVICE_ADDRESS_0				0xB8
-#define 	LPS22HB_DEVICE_ADDRESS_1				0xBA
+#define 	LPS22HB_DEVICE_ADDRESS_0				0xB9
+#define 	LPS22HB_DEVICE_ADDRESS_1				0xBB
 
 #define 	LPS22HB_WHO_AM_I_VALUE					0xB1
 #define 	LPS22HB_WHO_AM_I_ADDRES					0x0F
 
 #define 	LPS22HB_ADDRESS_CTRL1					0x10
+#define 	LPS22HB_ADDRESS_CTRL2					0x11
+#define 	LPS22HB_ADDRESS_CTRL3					0x12
+//#define 	LPS22HB_ADDRESS_CTRL4					0x23
 
 #define 	LPS22HB_ADDRESS_PRESS_OUT_XL			0x28
 #define 	LPS22HB_ADDRESS_PRESS_OUT_L				0x29
